@@ -1,64 +1,53 @@
 using System;
 
 /// <summary>
-/// 微信平台 - 继承BasePlatform，使用override重写特定逻辑
+/// 微信平台：支持消息、用户信息、支付和分享。这里故意不实现视频上传能力。
 /// </summary>
-public class WeChatPlatform : BasePlatform
+public class WeChatPlatform : BasePlatform,
+    IMessagePlatform,
+    IUserInfoPlatform,
+    IPaymentPlatform,
+    ISharePlatform
 {
     public override string PlatformName => "微信";
 
-    /// <summary>
-    /// Override: 微信特殊的消息处理
-    /// </summary>
-    public override bool SendMessage(string message)
+    public bool SendMessage(string message)
     {
-        // 微信特有逻辑
-        Console.WriteLine($"[微信 Override] 发送消息(带微信特殊处理): {message}");
+        Log($"通过微信消息通道发送：{message}");
         return true;
     }
 
-    /// <summary>
-    /// Override: 微信视频上传需要企业微信认证
-    /// </summary>
-    public override bool UploadVideo(string filePath)
+    public string GetUserInfo(string userId)
     {
-        Console.WriteLine($"[微信 Override] 上传视频(微信特有): {filePath}");
-        // 微信特有: 企业认证、权限校验等
+        Log($"通过微信开放平台获取用户信息：{userId}");
+        return $"{{\"platform\":\"{PlatformName}\",\"userId\":\"{userId}\",\"nickname\":\"WeChatUser\"}}";
+    }
+
+    public bool ProcessPayment(string orderId, decimal amount)
+    {
+        Log($"调用微信支付，订单：{orderId}，金额：{amount:C}");
         return true;
     }
 
-    // GetUserInfo 使用默认实现，不重写
-
-    /// <summary>
-    /// Override: 微信特殊的支付流程
-    /// 微信使用微信支付(WeChat Pay)
-    /// </summary>
-    public override bool ProcessPayment(string orderId, decimal amount)
+    public bool Share(string content, string shareType)
     {
-        Console.WriteLine($"[微信 Override] 微信支付系统 - 订单ID: {orderId}, 金额: {amount}元");
-        Console.WriteLine($"[微信] 使用微信支付SDK(WeChat Pay)完成支付");
-        Console.WriteLine($"[微信] 企业商户号认证完成");
-        return true;
-    }
-
-    /// <summary>
-    /// Override: 微信特殊的分享流程
-    /// 微信支持朋友圈、好友、公众号等多种分享方式
-    /// </summary>
-    public override bool Share(string content, string shareType)
-    {
-        Console.WriteLine($"[微信 Override] 微信分享系统 - 类型: {shareType}, 内容: {content}");
-        if (shareType == "friend")
+        if (shareType is not ("friend" or "timeline"))
         {
-            Console.WriteLine($"[微信] 通过微信SDK分享到好友");
+            Console.WriteLine($"[调度器] {PlatformName} 不支持 {shareType} 分享。");
+            return false;
         }
-        else if (shareType == "circle")
-        {
-            Console.WriteLine($"[微信] 通过微信SDK分享到朋友圈");
-        }
-        else if (shareType == "official")
-        {
-            Console.WriteLine($"[微信] 通过微信官方账号分享");
-        }
+
+        Log($"分享到{GetShareTargetName(shareType)}：{content}");
         return true;
     }
+
+    private static string GetShareTargetName(string shareType)
+    {
+        return shareType switch
+        {
+            "friend" => "微信好友",
+            "timeline" => "朋友圈",
+            _ => shareType
+        };
+    }
+}

@@ -1,49 +1,47 @@
-using System;
-
 /// <summary>
-/// 平台接口 - 统一定义抖音和微信的调用规范
+/// 平台身份。所有平台都应该具备，但不代表支持所有业务能力。
 /// </summary>
 public interface IPlatform
 {
-    /// <summary>
-    /// 平台名称
-    /// </summary>
     string PlatformName { get; }
+}
 
-    /// <summary>
-    /// 发送消息
-    /// </summary>
-    /// <param name="message">消息内容</param>
-    /// <returns>是否成功</returns>
+/// <summary>
+/// 消息能力。
+/// </summary>
+public interface IMessagePlatform
+{
     bool SendMessage(string message);
+}
 
-    /// <summary>
-    /// 上传视频
-    /// </summary>
-    /// <param name="filePath">视频文件路径</param>
-    /// <returns>是否成功</returns>
+/// <summary>
+/// 视频上传能力。
+/// </summary>
+public interface IVideoPlatform
+{
     bool UploadVideo(string filePath);
+}
 
-    /// <summary>
-    /// 获取用户信息
-    /// </summary>
-    /// <param name="userId">用户ID</param>
-    /// <returns>用户信息JSON</returns>
+/// <summary>
+/// 用户信息能力。
+/// </summary>
+public interface IUserInfoPlatform
+{
     string GetUserInfo(string userId);
+}
 
-    /// <summary>
-    /// 支付功能
-    /// </summary>
-    /// <param name="orderId">订单ID</param>
-    /// <param name="amount">支付金额</param>
-    /// <returns>支付结果</returns>
+/// <summary>
+/// 支付能力。
+/// </summary>
+public interface IPaymentPlatform
+{
     bool ProcessPayment(string orderId, decimal amount);
+}
 
-    /// <summary>
-    /// 分享功能
-    /// </summary>
-    /// <param name="content">分享内容</param>
-    /// <param name="shareType">分享类型(text/image/video)</param>
-    /// <returns>分享结果</returns>
+/// <summary>
+/// 分享能力。
+/// </summary>
+public interface ISharePlatform
+{
     bool Share(string content, string shareType);
 }

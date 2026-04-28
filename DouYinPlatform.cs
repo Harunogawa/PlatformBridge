@@ -1,59 +1,50 @@
 using System;
 
 /// <summary>
-/// 抖音平台 - 继承BasePlatform，使用override重写特定逻辑
+/// 抖音平台：支持消息、视频、用户信息、支付和分享。
 /// </summary>
-public class DouYinPlatform : BasePlatform
+public class DouYinPlatform : BasePlatform,
+    IMessagePlatform,
+    IVideoPlatform,
+    IUserInfoPlatform,
+    IPaymentPlatform,
+    ISharePlatform
 {
     public override string PlatformName => "抖音";
 
-    /// <summary>
-    /// Override: 抖音特殊的消息处理
-    /// </summary>
-    public override bool SendMessage(string message)
+    public bool SendMessage(string message)
     {
-        // 抖音特有逻辑
-        Console.WriteLine($"[抖音 Override] 发送消息(带抖音特殊处理): {message}");
+        Log($"通过抖音私信发送消息：{message}");
         return true;
     }
 
-    /// <summary>
-    /// Override: 抖音视频上传需要额外的封面处理
-    /// </summary>
-    public override bool UploadVideo(string filePath)
+    public bool UploadVideo(string filePath)
     {
-        Console.WriteLine($"[抖音 Override] 上传视频(抖音特有): {filePath}");
-        // 抖音特有: 添加封面、标签等
+        Log($"上传视频并处理封面、标签：{filePath}");
         return true;
     }
 
-    // GetUserInfo 使用默认实现，不重写
-
-    /// <summary>
-    /// Override: 抖音特殊的支付流程
-    /// 抖音使用字节跳动支付体系
-    /// </summary>
-    public override bool ProcessPayment(string orderId, decimal amount)
+    public string GetUserInfo(string userId)
     {
-        Console.WriteLine($"[抖音 Override] 字节跳动支付系统 - 订单ID: {orderId}, 金额: {amount}元");
-        Console.WriteLine($"[抖音] 使用字节跳动支付SDK完成支付");
+        Log($"通过抖音开放平台获取用户信息：{userId}");
+        return $"{{\"platform\":\"{PlatformName}\",\"userId\":\"{userId}\",\"nickname\":\"DouYinUser\"}}";
+    }
+
+    public bool ProcessPayment(string orderId, decimal amount)
+    {
+        Log($"调用字节支付，订单：{orderId}，金额：{amount:C}");
         return true;
     }
 
-    /// <summary>
-    /// Override: 抖音特殊的分享流程
-    /// 抖音支持视频、图文等多种分享方式
-    /// </summary>
-    public override bool Share(string content, string shareType)
+    public bool Share(string content, string shareType)
     {
-        Console.WriteLine($"[抖音 Override] 抖音分享系统 - 类型: {shareType}, 内容: {content}");
-        if (shareType == "video")
+        if (shareType is not ("video" or "image"))
         {
-            Console.WriteLine($"[抖音] 通过抖音视频SDK分享");
+            Console.WriteLine($"[调度器] {PlatformName} 不支持 {shareType} 分享。");
+            return false;
         }
-        else if (shareType == "image")
-        {
-            Console.WriteLine($"[抖音] 通过抖音图文SDK分享");
-        }
+
+        Log($"分享{shareType}内容：{content}");
         return true;
     }
+}
