@@ -1,0 +1,60 @@
+# Build results
+bin/
+obj/
+dist/
+
+# Visual Studio / IDE
+.vs/
+.vscode/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.sln.VisualState.xml
+
+# Visual Studio Code
+.vscode/
+*.code-workspace
+
+# ReSharper
+.idea/
+*.DotSettings
+
+# User-specific files
+*.rsuser
+
+# IDE-specific
+*.swp
+*.swo
+*~
+
+# NuGet
+*.nupkg
+*.snupkg
+packages/
+.nuget/
+
+# Test Results
+TestResults/
+*.trx
+*.coverage
+
+# Output
+*.log
+*.exe
+*.dll
+*.pdb
+
+# Environment
+.env
+.env.local
+
+# OS
+.DS_Store
+Thumbs.db
+.directory
+
+# Project-specific
+*.rar
+*.zip
+*.bak
