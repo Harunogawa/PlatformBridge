@@ -28,4 +28,32 @@ public class DouYinPlatform : BasePlatform
     }
 
     // GetUserInfo 使用默认实现，不重写
-}
+
+    /// <summary>
+    /// Override: 抖音特殊的支付流程
+    /// 抖音使用字节跳动支付体系
+    /// </summary>
+    public override bool ProcessPayment(string orderId, decimal amount)
+    {
+        Console.WriteLine($"[抖音 Override] 字节跳动支付系统 - 订单ID: {orderId}, 金额: {amount}元");
+        Console.WriteLine($"[抖音] 使用字节跳动支付SDK完成支付");
+        return true;
+    }
+
+    /// <summary>
+    /// Override: 抖音特殊的分享流程
+    /// 抖音支持视频、图文等多种分享方式
+    /// </summary>
+    public override bool Share(string content, string shareType)
+    {
+        Console.WriteLine($"[抖音 Override] 抖音分享系统 - 类型: {shareType}, 内容: {content}");
+        if (shareType == "video")
+        {
+            Console.WriteLine($"[抖音] 通过抖音视频SDK分享");
+        }
+        else if (shareType == "image")
+        {
+            Console.WriteLine($"[抖音] 通过抖音图文SDK分享");
+        }
+        return true;
+    }

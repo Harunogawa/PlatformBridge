@@ -37,6 +37,8 @@ public interface IPlatform
     bool SendMessage(string message);
     bool UploadVideo(string filePath);
     string GetUserInfo(string userId);
+    bool ProcessPayment(string orderId, decimal amount);  // 支付SDK
+    bool Share(string content, string shareType);         // 分享SDK
 }
 ```
 
@@ -45,6 +47,8 @@ public interface IPlatform
 - `SendMessage()`：发送消息
 - `UploadVideo()`：上传视频
 - `GetUserInfo()`：获取用户信息
+- `ProcessPayment()`：支付处理
+- `Share()`：分享功能
 
 ---
 
@@ -62,6 +66,8 @@ public abstract class BasePlatform : IPlatform
     public virtual bool SendMessage(string message) { ... }
     public virtual bool UploadVideo(string filePath) { ... }
     public virtual string GetUserInfo(string userId) { ... }
+    public virtual bool ProcessPayment(string orderId, decimal amount) { ... }  // 支付默认实现
+    public virtual bool Share(string content, string shareType) { ... }         // 分享默认实现
 }
 ```
 
@@ -97,6 +103,8 @@ public class DouYinPlatform : BasePlatform
 **重写方法**：
 - `SendMessage()`：抖音特有的消息处理逻辑
 - `UploadVideo()`：包含抖音特有的视频处理（如封面、标签）
+- `ProcessPayment()`：使用字节跳动支付系统
+- `Share()`：支持抖音视频和图文分享
 
 **继承方法**：
 - `GetUserInfo()`：使用 `BasePlatform` 的默认实现
@@ -125,6 +133,8 @@ public class WeChatPlatform : BasePlatform
 **重写方法**：
 - `SendMessage()`：微信特有的消息处理逻辑
 - `UploadVideo()`：包含微信企业认证、权限校验等
+- `ProcessPayment()`：使用微信支付(WeChat Pay)系统
+- `Share()`：支持朋友圈、好友、官方账号等多种分享方式
 
 **继承方法**：
 - `GetUserInfo()`：使用 `BasePlatform` 的默认实现
@@ -155,6 +165,8 @@ public class PlatformDispatcher
 
     public bool DispatchUploadVideo(string filePath) { ... }
     public string DispatchGetUserInfo(string userId) { ... }
+    public bool DispatchProcessPayment(string orderId, decimal amount) { ... }  // 支付转发
+    public bool DispatchShare(string content, string shareType) { ... }         // 分享转发
 }
 ```
 
@@ -314,43 +326,66 @@ C#Learn/
    dispatcher.DispatchSendMessage("Hello TikTok!");
    ```
 
-### 6.2 添加新方法
+### 6.2 添加新方法（支付和分享SDK示例）
 
-**当需要添加新功能时**：
+**以支付功能为例，添加步骤如下**：
 
 1. 在 `IPlatform` 接口中定义方法签名
    ```csharp
    public interface IPlatform
    {
        // ... 现有方法
-       bool PublishPost(string content);  // 新方法
+       bool ProcessPayment(string orderId, decimal amount);  // 支付方法
+       bool Share(string content, string shareType);         // 分享方法
    }
    ```
 
 2. 在 `BasePlatform` 中提供默认实现
    ```csharp
-   public virtual bool PublishPost(string content)
+   public virtual bool ProcessPayment(string orderId, decimal amount)
    {
-       Console.WriteLine($"[{PlatformName}] 发布内容: {content}");
+       Console.WriteLine($"[{PlatformName}] 默认支付处理 - 订单ID: {orderId}, 金额: {amount}元");
+       return true;
+   }
+
+   public virtual bool Share(string content, string shareType)
+   {
+       Console.WriteLine($"[{PlatformName}] 默认分享 - 类型: {shareType}, 内容: {content}");
        return true;
    }
    ```
 
 3. 在各平台中选择性 Override（如需定制化）
    ```csharp
-   public override bool PublishPost(string content)
+   // 抖音平台支付
+   public override bool ProcessPayment(string orderId, decimal amount)
    {
-       // 抖音特有的发布逻辑
+       Console.WriteLine($"[抖音 Override] 字节跳动支付系统 - 订单ID: {orderId}, 金额: {amount}元");
+       // 调用字节跳动支付SDK
+       return true;
+   }
+
+   // 微信平台支付
+   public override bool ProcessPayment(string orderId, decimal amount)
+   {
+       Console.WriteLine($"[微信 Override] 微信支付系统 - 订单ID: {orderId}, 金额: {amount}元");
+       // 调用微信支付(WeChat Pay)SDK
        return true;
    }
    ```
 
 4. 在调度器中添加转发方法
    ```csharp
-   public bool DispatchPublishPost(string content)
+   public bool DispatchProcessPayment(string orderId, decimal amount)
    {
-       Console.WriteLine($"[调度器] 转发到 {_platform.PlatformName}...");
-       return _platform.PublishPost(content);
+       Console.WriteLine($"[调度器] 转发支付请求到 {_platform.PlatformName}...");
+       return _platform.ProcessPayment(orderId, amount);
+   }
+
+   public bool DispatchShare(string content, string shareType)
+   {
+       Console.WriteLine($"[调度器] 转发分享请求到 {_platform.PlatformName}...");
+       return _platform.Share(content, shareType);
    }
    ```
 
@@ -407,9 +442,56 @@ PlatformDispatcher dispatcher = new PlatformDispatcher(douyin);
 dispatcher.DispatchSendMessage("你好，抖音!");
 dispatcher.DispatchUploadVideo("video.mp4");
 string userInfo = dispatcher.DispatchGetUserInfo("12345");
+
+// 支付功能
+dispatcher.DispatchProcessPayment("ORDER20240101001", 99.99m);
+
+// 分享功能
+dispatcher.DispatchShare("精彩内容", "video");
 ```
 
-### 8.2 切换平台
+### 8.2 支付集成示例
+
+```csharp
+// 抖音支付
+BasePlatform douyin = new DouYinPlatform();
+PlatformDispatcher dispatcher = new PlatformDispatcher(douyin);
+bool paymentSuccess = dispatcher.DispatchProcessPayment("ORDER001", 199.99m);
+
+// 微信支付（自动使用WeChat Pay）
+BasePlatform wechat = new WeChatPlatform();
+PlatformDispatcher wechatDispatcher = new PlatformDispatcher(wechat);
+bool wechatPaymentSuccess = wechatDispatcher.DispatchProcessPayment("ORDER002", 199.99m);
+```
+
+### 8.3 分享功能示例
+
+```csharp
+// 抖音分享
+BasePlatform douyin = new DouYinPlatform();
+PlatformDispatcher dispatcher = new PlatformDispatcher(douyin);
+
+// 视频分享
+dispatcher.DispatchShare("推荐这个精彩视频", "video");
+
+// 图文分享
+dispatcher.DispatchShare("有趣的图文内容", "image");
+
+// 微信分享
+BasePlatform wechat = new WeChatPlatform();
+PlatformDispatcher wechatDispatcher = new PlatformDispatcher(wechat);
+
+// 分享到好友
+wechatDispatcher.DispatchShare("内容链接", "friend");
+
+// 分享到朋友圈
+wechatDispatcher.DispatchShare("我的内容", "circle");
+
+// 分享到官方账号
+wechatDispatcher.DispatchShare("官方内容", "official");
+```
+
+### 8.4 切换平台
 
 ```csharp
 // 从抖音切换到微信
@@ -491,13 +573,64 @@ public class LoggingDispatcher : PlatformDispatcher
 
 ---
 
-## 十、总结
+## 十一、支付和分享SDK集成说明
+
+### 11.1 支付功能集成
+
+**抖音支付系统**：
+- 集成字节跳动支付SDK
+- 支持支付宝、微信等多种支付方式
+- 自动处理订单和回调
+
+**微信支付系统**：
+- 集成微信支付(WeChat Pay)
+- 企业商户号认证
+- 支持多种支付类型和分账
+
+### 11.2 分享功能集成
+
+**抖音分享系统**：
+- 支持视频分享（自动处理分辨率转换）
+- 支持图文分享（自动处理图片压缩）
+- 支持自定义分享描述和标签
+
+**微信分享系统**：
+- 分享到好友
+- 分享到朋友圈
+- 分享到官方账号
+- 支持卡片、链接等多种分享格式
+
+### 11.3 实现流程图
+
+```
+支付流程：
+订单创建 → PlatformDispatcher → 平台支付方法 → 第三方支付SDK → 支付结果
+
+分享流程：
+分享内容 → PlatformDispatcher → 平台分享方法 → 分享SDK → 分享结果
+```
+
+---
+
+## 十二、总结
 
 | 层级 | 组件 | 职责 |
 |------|------|------|
-| **接口层** | `IPlatform` | 定义契约 |
-| **基类层** | `BasePlatform` | 提供默认实现 |
-| **平台层** | `DouYinPlatform`<br/>`WeChatPlatform` | 按需 Override |
+| **接口层** | `IPlatform` | 定义契约（包括消息、视频、用户、支付、分享等） |
+| **基类层** | `BasePlatform` | 提供默认实现（可被子类Override） |
+| **平台层** | `DouYinPlatform`<br/>`WeChatPlatform` | 按需Override（支付SDK、分享SDK等） |
+| **调度层** | `PlatformDispatcher` | 统一管理平台分发和日志记录 |
+| **测试层** | `TestRunner` | 演示如何使用所有功能 |
+
+### 功能特性汇总
+
+| 功能 | 抖音 | 微信 |
+|------|------|------|
+| 消息 | ✅ | ✅ |
+| 视频上传 | ✅ | ✅ |
+| 用户信息 | ✅ | ✅ |
+| 支付（SDK） | ✅ 字节支付 | ✅ WeChat Pay |
+| 分享（SDK） | ✅ 视频/图文 | ✅ 好友/朋友圈 |
 | **调度层** | `PlatformDispatcher` | 统一转发 |
 | **应用层** | `TestRunner` | 使用和测试 |
 

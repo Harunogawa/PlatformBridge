@@ -36,4 +36,21 @@ public abstract class BasePlatform : IPlatform
         Console.WriteLine($"[{PlatformName}] 默认获取用户信息: {userId}");
         return $"{{\"platform\":\"{PlatformName}\",\"userId\":\"{userId}\"}}";
     }
-}
+
+    /// <summary>
+    /// 支付功能 - 默认实现，可被Override
+    /// </summary>
+    public virtual bool ProcessPayment(string orderId, decimal amount)
+    {
+        Console.WriteLine($"[{PlatformName}] 默认支付处理 - 订单ID: {orderId}, 金额: {amount}元");
+        return true;
+    }
+
+    /// <summary>
+    /// 分享功能 - 默认实现，可被Override
+    /// </summary>
+    public virtual bool Share(string content, string shareType)
+    {
+        Console.WriteLine($"[{PlatformName}] 默认分享 - 类型: {shareType}, 内容: {content}");
+        return true;
+    }
